@@ -1,0 +1,3 @@
+as -32 -gstabs trab2.s -o at.o
+ld -m elf_i386 at.o -lc -dynamic-linker /lib/ld-linux.so.2 -o at
+./at
