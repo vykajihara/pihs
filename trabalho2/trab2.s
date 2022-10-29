@@ -29,6 +29,10 @@
 
 	txtMenu: 			.asciz 	"Menu de opcoes:\n<1> Insercao\n<2> Remocao\n<3> Consulta\n<4> Gravar cadastro\n<5> Recuperar cadastro\n<6> Relatorio de registros\n<7> Sair\nEscolha uma opcao => "
 
+	txtNovoCadastro: 	.asciz 	"\n\n- NOVO CADASTRO -\n"
+	txtRelatorio:	 	.asciz 	"\n\n- RELATORIO DE REGISTROS -\n"
+	txtListaVazia: 		.asciz 	"Nao existem imoveis cadastrados\n"
+
 	txtPedeNome:		.asciz	"\nNome: "
 	txtPedeCPF:			.asciz	"\nCPF: " 
 	txtPedeCel:			.asciz  "\nCelular: "
@@ -57,10 +61,10 @@
 	txtMostraNumero: 	.asciz 	"Numero: %d\n"
 	txtMostraQuartos:	.asciz 	"\nQuantidade de quartos simples: %d\n" 
 	txtMostraSuites:	.asciz 	"\nQuantidade de suites: %d\n" 
-	txtMostraBanheiro:	.asciz	"\nPossui banheiro social? <S>/<N>: %c\n"
-	txtMostraCozinha:	.asciz	"\nPossui cozinha? <S>/<N>: %c\n"
-	txtMostraSala:		.asciz	"\nPossui sala? <S>/<N>: %c\n"
-	txtMostraGaragem: 	.asciz	"\nPossui garagem? <S>/<N>: %c\n"
+	txtMostraBanheiro:	.asciz	"\nPossui banheiro social? <s>/<n>: %c\n"
+	txtMostraCozinha:	.asciz	"\nPossui cozinha? <s>/<n>: %c\n"
+	txtMostraSala:		.asciz	"\nPossui sala? <s>/<n>: %c\n"
+	txtMostraGaragem: 	.asciz	"\nPossui garagem? <s>/<n>: %c\n"
 	txtMostraArea:		.asciz	"\nArea total: %.2lf\n"
 	txtMostraAluguel:	.asciz	"\nValor do aluguel: R$ %.2lf\n"
 
@@ -69,9 +73,12 @@
 	tipoInt: 	.asciz 	"%d"
 	tipoChar:	.asciz	" %c"
 	tipoDouble: .asciz 	"%lf"
+
+	limpaBuf: 	.asciz "%*c"
 	
 	opcao: 		.int 	0
 	tamReg:  	.int 	244
+	tamCampos: 	.int 	240
 
 	# ponteiros
 	listaPtr: 	.space 	4 	# ponteiro para o primeiro elemento da lista de registros
@@ -87,10 +94,7 @@ _start:
 
 _menu:
 
-	call leReg
-	call mostraReg
-
-/*	pushl	$txtAbertura
+	pushl	$txtAbertura
 	call	printf
 	pushl 	$txtMenu
 	call 	printf
@@ -103,7 +107,7 @@ _menu:
 
 	call  	trataOpcao
 
-	jmp 	_menu*/
+	jmp 	_menu
 
 _end:
 
@@ -141,10 +145,14 @@ trataOpcao:
 
 insercao: 
 
+	pushl 	$txtNovoCadastro
+	call 	printf
+	addl 	$4, %esp
+
 	call  	leReg
 
 	cmpl  	$NULL, listaPtr
-	je  	insereLista
+	jne  	insereLista
 
 	movl 	regPtr, %eax
 	movl 	%eax, listaPtr
@@ -152,7 +160,11 @@ insercao:
 	RET
 
 leReg:
-
+	
+	pushl 	$limpaBuf
+	call 	scanf
+	addl 	$4, %esp
+	
 	pushl	tamReg
 	call	malloc
 	movl	%eax, regPtr	
@@ -334,25 +346,47 @@ leReg:
 
 
 insereLista:
+	# insere ordenadamente o elemento lido na lista
 	
-	
+
 
 
 	RET
 
-contaComodos:
 
+
+contaComodos:
 	# comodos = quartos + suites + outros comodos
-	# comodos marcados com <S> => add1 comodos
-	# 					   <N> ou qualquer outra coisa => nao soma
+	# comodos marcados com <s> => incl comodos
+	# 					   <n> ou qualquer outra coisa => nao soma
 	# FIX ME -> COLOCAR VERIFICAÇÃO DE CAMPO
 
 	movl 	regPtr, %edi
-	addl 	196, %edi 		# 196 = posição da qtd de quartos no reg
+	addl 	$200, %edi 
 
-	
+	movl 	$0, %eax
+	addl 	(%edi), %eax
+	addl 	$4, %edi
 
-	RET
+	addl 	(%edi), %eax
+	addl 	$4, %edi
+
+	movl 	$4, %ecx  	# 4 campos s/n
+
+	loop1:
+		movb  	(%edi), %bl
+		cmpb	$'s', %bl
+		je 		respostaSim
+
+	volta1: 
+		addl 	$4, %edi
+		loop 	loop1
+
+		RET
+
+	respostaSim:
+		incl  	%eax
+		jmp volta1
 
 
 /***************************************************************
@@ -395,17 +429,47 @@ recuperar:
   **************************************************************/
 
 relatorio:
-	
+	# imprime todos os registros
+
+	pushl 	$txtRelatorio
+	call 	printf
+	addl 	$4, %esp
+
+	cmpl 	$NULL, listaPtr
+	je  	relatorioVazio
+
+	movl 	listaPtr, %eax
+	movl 	%eax, regPtr 	# aqui regPtr sera usado
+							# para iterar os elem da lista
+checkRegPtr:	
+	cmpl 	$NULL, regPtr 	
+	jne  	imprimeReg
+
 	RET
 
+imprimeReg:
+	call  	mostraReg
+	movl 	tamCampos, %eax 	
+	movl 	regPtr, %ebx 
+	addl 	%eax, %ebx  # desloca tamCampos do endereco do registro
+						# para ler o endereco do proximo
+	movl 	(%ebx), %eax
+	movl  	%eax,  regPtr
+	jmp  	checkRegPtr
+
+relatorioVazio:
+	pushl 	$txtListaVazia
+	call 	printf
+	addl 	$4, %esp
+
+	RET
 
 mostraReg:
-
 	# edi -> ponteiro que percorre os campos
 
-	pushl	$txtMostraReg
-	call	printf
-	addl	$4, %esp
+#	pushl	$txtMostraReg
+#	call	printf
+#	addl	$4, %esp
 
 	movl	regPtr, %edi
 
