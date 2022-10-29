@@ -32,6 +32,7 @@
 	txtNovoCadastro: 	.asciz 	"\n\n- NOVO CADASTRO -\n"
 	txtRelatorio:	 	.asciz 	"\n\n- RELATORIO DE REGISTROS -\n"
 	txtListaVazia: 		.asciz 	"Nao existem imoveis cadastrados\n"
+	txtRelatorioReg: 	.asciz 	"\n\n\n\n	---> REGISTRO NUMERO #%d\n"
 
 	txtPedeNome:		.asciz	"\nNome: "
 	txtPedeCPF:			.asciz	"\nCPF: " 
@@ -43,32 +44,32 @@
 	txtPedeNumero: 		.asciz 	"Numero: "
 	txtPedeQuarto: 		.asciz 	"\nQuantidade de quartos simples: " 
 	txtPedeSuites:		.asciz 	"\nQuantidade de suites: " 
-	txtPedeBanheiro:	.asciz	"\nPossui banheiro social? <S>/<N>: "
-	txtPedeCozinha:		.asciz	"\nPossui cozinha? <S>/<N>: "
-	txtPedeSala:		.asciz	"\nPossui sala? <S>/<N>: "
-	txtPedeGaragem: 	.asciz	"\nPossui garagem? <S>/<N>: "
+	txtPedeBanheiro:	.asciz	"\nPossui banheiro social? <s>/<n>: "
+	txtPedeCozinha:		.asciz	"\nPossui cozinha? <s>/<n>: "
+	txtPedeSala:		.asciz	"\nPossui sala? <s>/<n>: "
+	txtPedeGaragem: 	.asciz	"\nPossui garagem? <s>/<n>: "
 	txtPedeArea:		.asciz	"\nArea total: "
 	txtPedeAluguel:		.asciz	"\nValor do aluguel: "
 
-	txtMostraReg:		.asciz	"\n\n\n\n\n\n\n\n\n\n\n\n 	*** REGISTRO LIDO ***"
-	txtMostraNome:		.asciz	"\nNome: %s"
-	txtMostraCPF:		.asciz	"\nCPF: %s" 
-	txtMostraCel:		.asciz  "\nCelular: %s"
-	txtMostraTipoIm: 	.asciz	"\nTipo de imovel <C>asa/<A>partamento: %s"
-	txtMostraCidade:	.asciz	"\nEndereco\nCidade: %s"
-	txtMostraBairro:	.asciz	"Bairro: %s"
-	txtMostraRua:		.asciz	"Rua: %s"
-	txtMostraNumero: 	.asciz 	"Numero: %d\n"
-	txtMostraQuartos:	.asciz 	"\nQuantidade de quartos simples: %d\n" 
-	txtMostraSuites:	.asciz 	"\nQuantidade de suites: %d\n" 
-	txtMostraBanheiro:	.asciz	"\nPossui banheiro social? <s>/<n>: %c\n"
-	txtMostraCozinha:	.asciz	"\nPossui cozinha? <s>/<n>: %c\n"
-	txtMostraSala:		.asciz	"\nPossui sala? <s>/<n>: %c\n"
-	txtMostraGaragem: 	.asciz	"\nPossui garagem? <s>/<n>: %c\n"
-	txtMostraArea:		.asciz	"\nArea total: %.2lf\n"
-	txtMostraAluguel:	.asciz	"\nValor do aluguel: R$ %.2lf\n"
+	txtMostraNome:		.asciz	"\n 	Nome: %s"
+	txtMostraCPF:		.asciz	"\n 	CPF: %s" 
+	txtMostraCel:		.asciz  "\n 	Celular: %s"
+	txtMostraTipoIm: 	.asciz	"\n 	Tipo de imovel <C>asa/<A>partamento: %s"
+	txtMostraCidade:	.asciz	"\n 	Endereco\n 	Cidade: %s"
+	txtMostraBairro:	.asciz	" 	Bairro: %s"
+	txtMostraRua:		.asciz	" 	Rua: %s"
+	txtMostraNumero: 	.asciz 	" 	Numero: %d\n"
+	txtMostraQuartos:	.asciz 	"\n 	Quantidade de quartos simples: %d\n" 
+	txtMostraSuites:	.asciz 	"\n 	Quantidade de suites: %d\n" 
+	txtMostraBanheiro:	.asciz	"\n 	Possui banheiro social? <s>/<n>: %c\n"
+	txtMostraCozinha:	.asciz	"\n 	Possui cozinha? <s>/<n>: %c\n"
+	txtMostraSala:		.asciz	"\n 	Possui sala? <s>/<n>: %c\n"
+	txtMostraGaragem: 	.asciz	"\n 	Possui garagem? <s>/<n>: %c\n"
+	txtMostraArea:		.asciz	"\n 	Area total: %.2lf\n"
+	txtMostraAluguel:	.asciz	"\n 	Valor do aluguel: R$ %.2lf\n"
 
-	pulaLinha: 	.asciz 	"\n"
+	txtLimpaTela:		.asciz	"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+	pulaLinha: 			.asciz 	"\n"
 	
 	tipoInt: 	.asciz 	"%d"
 	tipoChar:	.asciz	" %c"
@@ -83,7 +84,7 @@
 	# ponteiros
 	listaPtr: 	.space 	4 	# ponteiro para o primeiro elemento da lista de registros
 	regPtr:		.space	4 	# ponteiro para o registro que será lido
-	auxPtr: 	.space 	4 	# ponteiro auxiliar para operacoes na lista 
+	auxPtr:	 	.space 	4 	# ponteiro auxiliar
 	NULL:		.space 	4 	
 	
 .section .text
@@ -93,7 +94,6 @@ _start:
 	movl  	$NULL, listaPtr 	# incializa listaPtr (lista vazia)
 
 _menu:
-
 	pushl	$txtAbertura
 	call	printf
 	pushl 	$txtMenu
@@ -110,12 +110,10 @@ _menu:
 	jmp 	_menu
 
 _end:
-
 	pushl 	$0
 	call 	exit
 
 trataOpcao:
-
 	cmpl 	$1, opcao
 	je  	insercao
 
@@ -144,10 +142,11 @@ trataOpcao:
   **************************************************************/
 
 insercao: 
-
+	pushl 	$txtLimpaTela
+	call 	printf
 	pushl 	$txtNovoCadastro
 	call 	printf
-	addl 	$4, %esp
+	addl 	$8, %esp
 
 	call  	leReg
 
@@ -160,7 +159,6 @@ insercao:
 	RET
 
 leReg:
-	
 	pushl 	$limpaBuf
 	call 	scanf
 	addl 	$4, %esp
@@ -340,53 +338,98 @@ leReg:
 	popl  	%edi
 	addl  	$8, %edi
 
-	movl 	$NULL, (%edi)  		# Seta campo prox como NULL
-
+	movl 	$NULL, (%edi)  		# proxPtr := NULL
+	
 	RET
 
 
 insereLista:
 	# insere ordenadamente o elemento lido na lista
+	movl 	regPtr, %esi 	# esi é usado na func contaComodos
+	call 	contaComodos 	# calcula comodos do reg a ser inserido
+	movl 	%eax, %ebx  	# ebx guarda qtd de comodos do reg a ser inserido
+
+	movl 	listaPtr, %edi
+	movl 	%edi, %esi 		# atualiza esi para o primeiro da lista
+	call  	contaComodos
+
+	cmpl 	%eax, %ebx
+	jl  	insereInicio
+
+volta2:	
+	movl 	%edi, auxPtr # guarda o valor do registro anterior
+
+	addl 	tamCampos, %edi # atualiza edi para o 	
+	movl 	(%edi), %edi  	# prox elem
+	cmpl 	$NULL, %edi
+	je 		insereFim  	
 	
+	movl 	%edi, %esi 		
+	call  	contaComodos
 
+	cmpl 	%eax, %ebx
+	jge  	volta2
+	
+	movl 	auxPtr, %ecx # recupera o valor do reg anterior em ecx
 
-
+	movl 	regPtr, %eax
+	addl 	tamCampos, %ecx
+	movl 	%eax, (%ecx)
+	addl 	tamCampos, %eax
+	movl 	%edi, (%eax)
+	
 	RET
 
+insereInicio:
+	movl 	regPtr, %eax
+	movl 	%eax, listaPtr 	
+	addl 	tamCampos, %eax 	
+	movl 	%edi, (%eax)
+	
+	RET
 
+insereFim:
+	movl 	auxPtr, %edi
+	addl 	tamCampos, %edi
+	movl 	regPtr, %eax
+	movl 	%eax, (%edi)
+	
+	RET
 
 contaComodos:
-	# comodos = quartos + suites + outros comodos
-	# comodos marcados com <s> => incl comodos
-	# 					   <n> ou qualquer outra coisa => nao soma
-	# FIX ME -> COLOCAR VERIFICAÇÃO DE CAMPO
+	# cômodos = quartos + suítes + outros cômodos
+	# cômodos marcados com <s> => incl cômodos
+	# 					   <n> (ou qualquer outra coisa) => não soma
+	
+	# Usa os registradores -> esi, eax, ecx, edx
 
-	movl 	regPtr, %edi
-	addl 	$200, %edi 
+	# esi caminha pelos campos do reg
+	# deve ser inicializado onde contaComodos é chamada
+	addl 	$200, %esi  	# 200 -> posição do campo "número de quartos"
 
-	movl 	$0, %eax
-	addl 	(%edi), %eax
-	addl 	$4, %edi
+	movl 	$0, %eax 		# RESULTADO RETORNARÁ EM EAX
+	addl 	(%esi), %eax
+	addl 	$4, %esi
 
-	addl 	(%edi), %eax
-	addl 	$4, %edi
+	addl 	(%esi), %eax
+	addl 	$4, %esi
 
 	movl 	$4, %ecx  	# 4 campos s/n
 
 	loop1:
-		movb  	(%edi), %bl
-		cmpb	$'s', %bl
+		movb  	(%esi), %dl
+		cmpb	$'s', %dl
 		je 		respostaSim
 
 	volta1: 
-		addl 	$4, %edi
+		addl 	$4, %esi
 		loop 	loop1
-
+		
 		RET
 
 	respostaSim:
 		incl  	%eax
-		jmp volta1
+		jmp 	volta1
 
 
 /***************************************************************
@@ -430,10 +473,13 @@ recuperar:
 
 relatorio:
 	# imprime todos os registros
-
+	movl 	$0, %esi # contador de registros
+	
+	pushl 	$txtLimpaTela
+	call 	printf
 	pushl 	$txtRelatorio
 	call 	printf
-	addl 	$4, %esp
+	addl 	$8, %esp
 
 	cmpl 	$NULL, listaPtr
 	je  	relatorioVazio
@@ -448,6 +494,12 @@ checkRegPtr:
 	RET
 
 imprimeReg:
+	incl 	%esi
+	pushl	%esi
+	pushl 	$txtRelatorioReg
+	call  	printf
+	addl 	$8, %esp
+
 	call  	mostraReg
 	movl 	tamCampos, %eax 	
 	movl 	regPtr, %ebx 
