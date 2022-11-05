@@ -31,8 +31,12 @@
 
 	txtNovoCadastro: 	.asciz 	"\n\n- NOVO CADASTRO -\n"
 	txtRelatorio:	 	.asciz 	"\n\n- RELATORIO DE REGISTROS -\n"
-	txtListaVazia: 		.asciz 	"Nao existem imoveis cadastrados\n"
-	txtRelatorioReg: 	.asciz 	"\n\n\n\n	---> REGISTRO NUMERO #%d\n"
+	txtListaVazia: 		.asciz 	"\nNAO EXISTEM IMOVEIS CADASTRADOS!\n"
+	txtMostraReg:	 	.asciz 	"\n\n\n\n	---> REGISTRO NUMERO #%d\n"
+	txtRemocao:		 	.asciz 	"\n\n- REMOCAO DE REGISTROS -\nRemove todos os registros com uma determinada quantidade de comodos\n"
+	txtConsulta: 		.asciz 	"\n\n- CONSULTA DE REGISTROS -\nMostra os registros com uma determinada quantidade de comodos\n"
+
+	txtPedeComodos: 	.asciz 	"\nInforme a quantidade de comodos => "
 
 	txtPedeNome:		.asciz	"\nNome: "
 	txtPedeCPF:			.asciz	"\nCPF: " 
@@ -80,6 +84,7 @@
 	opcao: 		.int 	0
 	tamReg:  	.int 	244
 	tamCampos: 	.int 	240
+	qtdComodos:	.int 	0 	
 
 	# ponteiros
 	listaPtr: 	.space 	4 	# ponteiro para o primeiro elemento da lista de registros
@@ -408,10 +413,10 @@ contaComodos:
 	addl 	$200, %esi  	# 200 -> posição do campo "número de quartos"
 
 	movl 	$0, %eax 		# RESULTADO RETORNARÁ EM EAX
-	addl 	(%esi), %eax
+	addl 	(%esi), %eax	# + quartos
 	addl 	$4, %esi
 
-	addl 	(%esi), %eax
+	addl 	(%esi), %eax 	# + suites
 	addl 	$4, %esi
 
 	movl 	$4, %ecx  	# 4 campos s/n
@@ -437,17 +442,111 @@ contaComodos:
   **************************************************************/
 
 remocao:
+	pushl 	$txtLimpaTela
+	call 	printf
+	pushl 	$txtRemocao
+	call 	printf
+	addl 	$8, %esp
+
+	movl 	listaPtr, %eax
+	cmpl 	$NULL, %eax
+	je  	informaListaVazia
+
+	call 	pedeComodos
+
+	movl 	listaPtr, %edi 	# edi -> iterar na lista
+
+	movl 	%edi, %esi 		# inicializa esi (parametro de contaComodos)
+	call  	contaComodos
+
+	cmpl 	%eax, qtdComodos 	# contaComodos retorna valor em eax
+	je	 	removeReg
+
+retRemove:
+
 
 	RET
+
+
+removeReg:
+		
+
+	RET
+
 
 /***************************************************************
 	CONSULTA
   **************************************************************/
 
 consulta:
+	pushl 	$txtLimpaTela
+	call 	printf
+	pushl 	$txtConsulta
+	call 	printf
+	addl 	$8, %esp
 
+	movl 	listaPtr, %eax
+	movl 	%eax, regPtr 	# regPtr é usado p/ mostrar o registro
+	cmpl 	$NULL, %eax
+	je  	informaListaVazia
+
+	call 	pedeComodos
+
+	movl 	$1, %esi 		# contador de registros p/ impressao
+
+checkRegPtrC:	
+	cmpl 	$NULL, regPtr 	
+	je  	retorno
+	pushl 	%esi 			# backup
+	movl 	regPtr, %esi
+	call 	contaComodos
+	popl 	%esi
+
+	cmpl 	%eax, qtdComodos 	# a lista esta ordenada, entao
+	jg 		contBusca 			# 	se o atual é menor -> continua iteracao
+	je 		imprimeRegC			# 	se o atual é igual -> imprime
+	jl  	retorno				# 	se o atual é maior -> retorna ao menu
+	jmp		contBusca
+
+retorno:
 	RET
 
+contBusca:
+	movl 	tamCampos, %eax 	
+	movl 	regPtr, %ebx 
+	addl 	%eax, %ebx  # desloca tamCampos do endereco do registro
+						# para ler o endereco do proximo
+	movl 	(%ebx), %eax
+	movl  	%eax,  regPtr
+
+	jmp 	checkRegPtrC
+
+imprimeRegC:
+	pushl  	%esi
+	pushl 	$txtMostraReg
+	call  	printf
+	addl  	$8, %esp
+
+	call  	mostraReg
+
+	incl 	%esi
+
+	jmp 	contBusca
+
+pedeComodos:	
+	pushl 	$txtPedeComodos
+	call 	printf
+	addl 	$4, %esp
+
+	pushl 	$qtdComodos
+	pushl 	$tipoInt
+	call 	scanf
+	addl 	$8, %esp
+
+	cmpl 	$0, qtdComodos
+	jle  	pedeComodos  	# verificacao: qtdComodos > 0
+
+	RET
 
 /***************************************************************
 	GRAVAR 
@@ -482,7 +581,7 @@ relatorio:
 	addl 	$8, %esp
 
 	cmpl 	$NULL, listaPtr
-	je  	relatorioVazio
+	je  	informaListaVazia
 
 	movl 	listaPtr, %eax
 	movl 	%eax, regPtr 	# aqui regPtr sera usado
@@ -496,7 +595,7 @@ checkRegPtr:
 imprimeReg:
 	incl 	%esi
 	pushl	%esi
-	pushl 	$txtRelatorioReg
+	pushl 	$txtMostraReg
 	call  	printf
 	addl 	$8, %esp
 
@@ -509,7 +608,7 @@ imprimeReg:
 	movl  	%eax,  regPtr
 	jmp  	checkRegPtr
 
-relatorioVazio:
+informaListaVazia:
 	pushl 	$txtListaVazia
 	call 	printf
 	addl 	$4, %esp
