@@ -35,7 +35,10 @@
 	txtMostraReg:	 	.asciz 	"\n\n\n\n	---> REGISTRO NUMERO #%d\n"
 	txtRemocao:		 	.asciz 	"\n\n- REMOCAO DE REGISTROS -\n"
 	txtRemoveReg: 		.asciz 	"\n 	REMOVENDO REGISTRO N.%d COM %d COMODOS ...\n"
-	txtConsulta: 		.asciz 	"\n\n- CONSULTA DE REGISTROS -\n"
+	txtConsulta: 		.asciz 	"\n\n- CONSULTA REGISTROS -\n"
+	txtRecupera: 		.asciz 	"\n\n- RECUPERA REGISTROS -\n"
+	txtGrava: 			.asciz 	"\n\n- GRAVA REGISTROS -\n"
+	txtPronto: 			.asciz 	"	... pronto! \n\n" 
 
 	txtPedeComodos: 	.asciz 	"\nInforme a quantidade de comodos => "
 
@@ -72,6 +75,36 @@
 	txtMostraGaragem: 	.asciz	"\n 	Possui garagem? <s>/<n>: %c\n"
 	txtMostraArea:		.asciz	"\n 	Area total: %.2lf\n"
 	txtMostraAluguel:	.asciz	"\n 	Valor do aluguel: R$ %.2lf\n"
+
+	nomeArq: 			.asciz 	"registros.txt"
+	descritor: 	.int 0
+	O_RDONLY: 	.int 0x0000 # somente leitura
+	O_WRONLY: 	.int 0x0001 # somente escrita
+#	O_RDWR:   	.int 0x0002 # leitura e escrita
+	O_CREAT:  	.int 0x0040 # cria o arquivo na abertura, caso ele não exista
+#	O_EXCL:   	.int 0x0080 # força a criação
+#	O_APPEND: 	.int 0x0400 # posiciona o cursor do arquivo no final, para adição
+	O_TRUNC:  	.int 0x0200 # reseta o arquivo aberto, deixando com tamanho 0 (zero)
+#	S_IRWXU: 	.int 0x01C0 # user (file owner) has read, write and execute permission
+	S_IRUSR: 	.int 0x0100 # user has read permission
+	S_IWUSR: 	.int 0x0080 # user has write permission
+#	S_IXUSR: 	.int 0x0040 # user has execute permission
+#	S_IRWXG: 	.int 0x0038 # group has read, write and execute permission
+#	S_IRGRP: 	.int 0x0020 # group has read permission
+#	S_IWGRP: 	.int 0x0010 # group has write permission
+#	S_IXGRP: 	.int 0x0008 # group has execute permission
+#	S_IRWXO: 	.int 0x0007 # others have read, write and execute permission
+#	S_IROTH: 	.int 0x0004 # others have read permission
+#	S_IWOTH: 	.int 0x0002 # others have write permission
+#	S_IXOTH: 	.int 0x0001 # others have execute permission
+#	S_NADA:  	.int 0x0000 # não altera a situação
+#	SYS_EXIT: 	.int 1
+#	SYS_FORK: 	.int 2
+	SYS_READ: 	.int 3
+	SYS_WRITE: 	.int 4
+	SYS_OPEN: 	.int 5
+	SYS_CLOSE: 	.int 6
+#	SYS_CREAT: 	.int 8
 
 	txtLimpaTela:		.asciz	"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
 	pulaLinha: 			.asciz 	"\n"
@@ -159,6 +192,7 @@ insercao:
 	call 	printf
 	addl 	$8, %esp
 
+	call  	alocaMemoria
 	call  	leReg
 
 	cmpl  	$NULL, listaPtr
@@ -169,18 +203,20 @@ insercao:
 
 	RET
 
-leReg:
-	pushl 	$limpaBuf
-	call 	scanf
-	addl 	$4, %esp
-	
+alocaMemoria:		
 	pushl	tamReg
 	call	malloc
 	movl	%eax, regPtr	
 	addl 	$4, %esp
 
+	RET
+
+leReg:
+	pushl 	$limpaBuf
+	call 	scanf
+	addl 	$4, %esp
+
 	# edi -> ponteiro que percorre os campos
-	
 	pushl	$txtPedeNome		# NOME   
 	call	printf 				
 	addl	$4, %esp
@@ -509,7 +545,6 @@ removeRegistro:
 	movl 	%ebx, (%eax) 		# atribui prox edereco ao campo prox do reg anterior
 
 letItGo:
-	
 	pushl 	%ebx
 	pushl 	%edi 
 	call  	free
@@ -531,6 +566,8 @@ removePrimeiro:
 	movl 	%eax, listaPtr
 	cmpl 	$NULL, %eax
 	jne  	letItGo
+
+	RET
 
 
 /***************************************************************
@@ -612,9 +649,66 @@ pedeComodos:
 	
 	GRAVAR 
 
+		Grava no arquivo a lista de registros que esta na memoria,
+	sobrescrevendo o que esta no arquivo.
+
   **************************************************************/
 
 gravar:
+	pushl 	$txtLimpaTela
+	call 	printf
+	pushl 	$txtGrava
+	call 	printf
+	addl 	$8, %esp
+
+	call 	abreArqGravar
+	call  	gravaLista
+	call  	fechaArquivo
+
+	pushl 	$txtPronto
+	call  	printf
+	addl 	$4, %esp
+
+	RET
+
+abreArqGravar:
+	movl 	SYS_OPEN, %eax 		# system call OPEN: retorna o descritor em %eax
+	movl 	$nomeArq, %ebx 		
+	movl 	O_WRONLY, %ecx 		# somente escrita
+	orl 	O_CREAT, %ecx 		# cria o arquivo na abertura, caso nao exista
+	orl 	O_TRUNC, %ecx 		# "reinicia" o arquivo
+	movl 	S_IRUSR, %edx
+	orl 	S_IWUSR, %edx
+	int 	$0x80
+	movl 	%eax, descritor 	# guarda o descritor
+
+	RET
+
+gravaLista:
+	movl 	listaPtr, %edi
+proxReg:
+	movl 	%edi, regPtr
+	call  	gravaReg
+	addl 	tamCampos, %edi
+	movl 	(%edi), %edi
+	cmpl 	$NULL, %edi
+	jne  	proxReg
+
+	RET
+
+gravaReg:	
+	movl 	SYS_WRITE, %eax
+	movl 	descritor, %ebx 
+	movl 	regPtr, %ecx
+	movl 	tamCampos, %edx
+	int 	$0x80
+
+	RET
+
+fechaArquivo:
+	movl 	SYS_CLOSE, %eax
+	movl 	descritor, %ebx # recupera o descritor
+	int 	$0x80
 
 	RET
 
@@ -623,11 +717,63 @@ gravar:
 	
 	RECUPERAR
 
+		Recupera todos os registros do arquivo, inserindo-os 
+	na lista que se encontra na memoria.
+
   **************************************************************/
 
 recuperar:
+	pushl 	$txtLimpaTela
+	call 	printf
+	pushl 	$txtRecupera
+	call 	printf
+	addl 	$8, %esp
+
+	call 	abreArqRecuperar
+	call 	recuperaRegs
+	call 	fechaArquivo
+
+	pushl 	$txtPronto
+	call  	printf
+	addl 	$4, %esp
 
 	RET
+
+abreArqRecuperar:
+	movl 	SYS_OPEN, %eax 	
+	movl 	$nomeArq, %ebx
+	movl 	O_RDONLY, %ecx
+	int 	$0x80
+	movl 	%eax, descritor 
+
+	RET
+
+recuperaRegs:
+	call 	alocaMemoria
+	movl 	SYS_READ, %eax 		# %eax retorna numero de bytes lidos
+	movl 	descritor, %ebx 
+	movl 	regPtr, %ecx
+	movl 	tamCampos, %edx
+	int 	$0x80 				# le registro do arquivo
+	movl 	regPtr, %edi
+
+	cmpl 	$0, %eax
+	je	 	retorno
+
+	addl 	tamCampos, %edi
+	movl 	$NULL, (%edi)
+
+	cmpl  	$NULL, listaPtr
+	jne  	callInsereLista
+
+	movl 	regPtr, %eax
+	movl 	%eax, listaPtr
+
+	jmp 	recuperaRegs
+
+callInsereLista:
+	call  	insereLista
+	jmp  	recuperaRegs
 
 
 /***************************************************************
