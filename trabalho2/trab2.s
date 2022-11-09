@@ -80,7 +80,7 @@
 	tipoChar:	.asciz	" %c"
 	tipoDouble: .asciz 	"%lf"
 
-	limpaBuf: 	.asciz "%*c"
+	limpaBuf: 	.asciz 	"%*c"
 	
 	opcao: 		.int 	0
 	tamReg:  	.int 	244
@@ -100,6 +100,8 @@ _start:
 	movl  	$NULL, listaPtr 	# incializa listaPtr (lista vazia)
 
 _menu:
+	finit
+
 	pushl	$txtAbertura
 	call	printf
 	pushl 	$txtMenu
@@ -462,9 +464,10 @@ remocao:
 
 	call 	pedeComodos
 
+	# inicializacoes
 	movl 	listaPtr, %edi 		# edi -> iterar na lista
-	movl 	%edi, auxPtr
-	movl 	$1, %esi
+	movl 	%edi, auxPtr 		# auxPtr guarda o endereco do anterior ao edi
+	movl 	$1, %esi 			# esi -> variavel para controle (print)
 
 loopRemocao:
 	pushl	%esi
@@ -505,13 +508,16 @@ removeRegistro:
 	movl 	(%ebx), %ebx 		# endereco do prox
 	movl 	%ebx, (%eax) 		# atribui prox edereco ao campo prox do reg anterior
 
-	cmpl 	$NULL, %ebx
-	je 		letItGo2
-
 letItGo:
+	
+	pushl 	%ebx
 	pushl 	%edi 
 	call  	free
 	addl 	$4, %esp
+	popl 	%ebx
+
+	cmpl 	$NULL, %ebx
+	je 		retorno
 
 	addl 	tamCampos, %edi
 	movl 	(%edi), %edi
@@ -526,13 +532,6 @@ removePrimeiro:
 	cmpl 	$NULL, %eax
 	jne  	letItGo
 
-letItGo2:
-	pushl 	%edi 
-	call  	free
-	addl 	$4, %esp
-
-	RET
-
 
 /***************************************************************
 	
@@ -540,9 +539,6 @@ letItGo2:
 
 		Imprime todos os registros com um determinado numero de 
 	comodos (informado pelo usuario)
-		A implementacao é semelhante a remocao, mas usando regPtr
-	para iterar na lista, pois ele é usado na funcao mostraReg
-	(para mostrar um registro na tela)
 
   **************************************************************/
 
@@ -655,8 +651,8 @@ relatorio:
 	je  	informaListaVazia
 
 	movl 	listaPtr, %eax
-	movl 	%eax, regPtr 	# aqui regPtr sera usado
-							# para iterar os elem da lista
+	movl 	%eax, regPtr 		# aqui regPtr sera usado
+								# para iterar os elem da lista
 checkRegPtr:	
 	cmpl 	$NULL, regPtr 	
 	jne  	imprimeReg
@@ -673,8 +669,8 @@ imprimeReg:
 	call  	mostraReg
 	movl 	tamCampos, %eax 	
 	movl 	regPtr, %ebx 
-	addl 	%eax, %ebx  # desloca tamCampos do endereco do registro
-						# para ler o endereco do proximo
+	addl 	%eax, %ebx  		# desloca tamCampos do endereco do registro
+								# para ler o endereco do proximo
 	movl 	(%ebx), %eax
 	movl  	%eax,  regPtr
 	jmp  	checkRegPtr
