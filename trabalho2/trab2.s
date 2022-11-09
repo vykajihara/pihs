@@ -33,8 +33,9 @@
 	txtRelatorio:	 	.asciz 	"\n\n- RELATORIO DE REGISTROS -\n"
 	txtListaVazia: 		.asciz 	"\nNAO EXISTEM IMOVEIS CADASTRADOS!\n"
 	txtMostraReg:	 	.asciz 	"\n\n\n\n	---> REGISTRO NUMERO #%d\n"
-	txtRemocao:		 	.asciz 	"\n\n- REMOCAO DE REGISTROS -\nRemove todos os registros com uma determinada quantidade de comodos\n"
-	txtConsulta: 		.asciz 	"\n\n- CONSULTA DE REGISTROS -\nMostra os registros com uma determinada quantidade de comodos\n"
+	txtRemocao:		 	.asciz 	"\n\n- REMOCAO DE REGISTROS -\n"
+	txtRemoveReg: 		.asciz 	"\n 	REMOVENDO REGISTRO N.%d COM %d COMODOS ...\n"
+	txtConsulta: 		.asciz 	"\n\n- CONSULTA DE REGISTROS -\n"
 
 	txtPedeComodos: 	.asciz 	"\nInforme a quantidade de comodos => "
 
@@ -142,8 +143,11 @@ trataOpcao:
 
 	RET
 	
+
 /***************************************************************
+	
 	INSERÇÃO
+
   **************************************************************/
 
 insercao: 
@@ -347,7 +351,6 @@ leReg:
 	
 	RET
 
-
 insereLista:
 	# insere ordenadamente o elemento lido na lista
 	movl 	regPtr, %esi 	# esi é usado na func contaComodos
@@ -409,7 +412,7 @@ contaComodos:
 	# Usa os registradores -> esi, eax, ecx, edx
 
 	# esi caminha pelos campos do reg
-	# deve ser inicializado onde contaComodos é chamada
+	# ESI DEVE SER INICIALIZADO ONDE contaComodos É CHAMADA
 	addl 	$200, %esi  	# 200 -> posição do campo "número de quartos"
 
 	movl 	$0, %eax 		# RESULTADO RETORNARÁ EM EAX
@@ -419,26 +422,31 @@ contaComodos:
 	addl 	(%esi), %eax 	# + suites
 	addl 	$4, %esi
 
-	movl 	$4, %ecx  	# 4 campos s/n
+	movl 	$4, %ecx  		# 4 campos s/n
 
-	loop1:
-		movb  	(%esi), %dl
-		cmpb	$'s', %dl
-		je 		respostaSim
+loop1:
+	movb  	(%esi), %dl 
+	cmpb	$'s', %dl
+	je 		respostaSim
 
-	volta1: 
-		addl 	$4, %esi
-		loop 	loop1
-		
-		RET
+volta1: 
+	addl 	$4, %esi
+	loop 	loop1
+	
+	RET
 
-	respostaSim:
-		incl  	%eax
-		jmp 	volta1
+respostaSim:
+	incl  	%eax
+	jmp 	volta1
 
 
 /***************************************************************
+	
 	REMOÇÃO
+
+		Remove todos os registro com um determinado numero de 
+	comodos (informado pelo usuario)
+
   **************************************************************/
 
 remocao:
@@ -454,31 +462,91 @@ remocao:
 
 	call 	pedeComodos
 
-	movl 	listaPtr, %edi 	# edi -> iterar na lista
+	movl 	listaPtr, %edi 		# edi -> iterar na lista
+	movl 	%edi, auxPtr
+	movl 	$1, %esi
 
-	movl 	%edi, %esi 		# inicializa esi (parametro de contaComodos)
+loopRemocao:
+	pushl	%esi
+	movl 	%edi, %esi 
 	call  	contaComodos
+	popl	%esi
 
-	cmpl 	%eax, qtdComodos 	# contaComodos retorna valor em eax
-	je	 	removeReg
-
-retRemove:
-
+	cmpl 	%eax, qtdComodos
+	jg  	atualizaPtrRemocao
+	je  	removeRegistro
 
 	RET
 
+atualizaPtrRemocao:
+	movl 	%edi, auxPtr
+	addl 	tamCampos, %edi
+	movl 	(%edi), %edi
+	cmpl 	$NULL, %edi 		# se for igual -> fim da lista
+	jne		loopRemocao
 
-removeReg:
-		
+	RET
+
+removeRegistro:
+	pushl 	qtdComodos
+	pushl 	%esi
+	pushl	$txtRemoveReg
+	call 	printf
+	addl 	$12, %esp
+	incl 	%esi
+
+	cmpl 	listaPtr, %edi
+	je  	removePrimeiro
+
+	movl 	auxPtr, %eax 		
+	addl 	tamCampos, %eax
+	movl 	%edi, %ebx
+	addl 	tamCampos, %ebx
+	movl 	(%ebx), %ebx 		# endereco do prox
+	movl 	%ebx, (%eax) 		# atribui prox edereco ao campo prox do reg anterior
+
+	cmpl 	$NULL, %ebx
+	je 		letItGo2
+
+letItGo:
+	pushl 	%edi 
+	call  	free
+	addl 	$4, %esp
+
+	addl 	tamCampos, %edi
+	movl 	(%edi), %edi
+	cmpl 	$NULL, %edi 		
+	jne		loopRemocao
+
+removePrimeiro:
+	movl 	%edi, %eax
+	addl 	tamCampos, %eax
+	movl 	(%eax), %eax
+	movl 	%eax, listaPtr
+	cmpl 	$NULL, %eax
+	jne  	letItGo
+
+letItGo2:
+	pushl 	%edi 
+	call  	free
+	addl 	$4, %esp
 
 	RET
 
 
 /***************************************************************
+	
 	CONSULTA
+
+		Imprime todos os registros com um determinado numero de 
+	comodos (informado pelo usuario)
+		A implementacao é semelhante a remocao, mas usando regPtr
+	para iterar na lista, pois ele é usado na funcao mostraReg
+	(para mostrar um registro na tela)
+
   **************************************************************/
 
-consulta:
+consulta:   
 	pushl 	$txtLimpaTela
 	call 	printf
 	pushl 	$txtConsulta
@@ -486,42 +554,38 @@ consulta:
 	addl 	$8, %esp
 
 	movl 	listaPtr, %eax
-	movl 	%eax, regPtr 	# regPtr é usado p/ mostrar o registro
+	movl 	%eax, regPtr 		# regPtr é usado p/ mostrar o registro
 	cmpl 	$NULL, %eax
 	je  	informaListaVazia
 
 	call 	pedeComodos
 
-	movl 	$1, %esi 		# contador de registros p/ impressao
+	movl 	$1, %esi 			# contador de registros p/ impressao
 
-checkRegPtrC:	
+buscaRegConsulta:	
 	cmpl 	$NULL, regPtr 	
 	je  	retorno
-	pushl 	%esi 			# backup
+	pushl 	%esi 				# backup
 	movl 	regPtr, %esi
 	call 	contaComodos
 	popl 	%esi
 
 	cmpl 	%eax, qtdComodos 	# a lista esta ordenada, entao
-	jg 		contBusca 			# 	se o atual é menor -> continua iteracao
-	je 		imprimeRegC			# 	se o atual é igual -> imprime
-	jl  	retorno				# 	se o atual é maior -> retorna ao menu
-	jmp		contBusca
+	jg 		contBuscaConsulta 	# 	se o atual é menor -> continua iteracao
+	je 		imprimeRegConsulta	# 	se o atual é igual -> imprime
 
 retorno:
-	RET
+	RET 						# 	se o atual é maior -> retorna ao menu
 
-contBusca:
-	movl 	tamCampos, %eax 	
-	movl 	regPtr, %ebx 
-	addl 	%eax, %ebx  # desloca tamCampos do endereco do registro
-						# para ler o endereco do proximo
-	movl 	(%ebx), %eax
-	movl  	%eax,  regPtr
+contBuscaConsulta:
+	movl 	regPtr, %eax
+	addl 	tamCampos, %eax 	
+	movl  	(%eax), %eax
+	movl 	%eax, regPtr
 
-	jmp 	checkRegPtrC
+	jmp 	buscaRegConsulta
 
-imprimeRegC:
+imprimeRegConsulta:
 	pushl  	%esi
 	pushl 	$txtMostraReg
 	call  	printf
@@ -531,7 +595,7 @@ imprimeRegC:
 
 	incl 	%esi
 
-	jmp 	contBusca
+	jmp 	contBuscaConsulta
 
 pedeComodos:	
 	pushl 	$txtPedeComodos
@@ -549,7 +613,9 @@ pedeComodos:
 	RET
 
 /***************************************************************
+	
 	GRAVAR 
+
   **************************************************************/
 
 gravar:
@@ -558,7 +624,9 @@ gravar:
 
 
 /***************************************************************
+	
 	RECUPERAR
+
   **************************************************************/
 
 recuperar:
@@ -567,11 +635,14 @@ recuperar:
 
 
 /***************************************************************
+	
 	RELATÓRIO
+
+		Mostra todos os registros na tela
+
   **************************************************************/
 
 relatorio:
-	# imprime todos os registros
 	movl 	$0, %esi # contador de registros
 	
 	pushl 	$txtLimpaTela
@@ -617,11 +688,6 @@ informaListaVazia:
 
 mostraReg:
 	# edi -> ponteiro que percorre os campos
-
-#	pushl	$txtMostraReg
-#	call	printf
-#	addl	$4, %esp
-
 	movl	regPtr, %edi
 
 	pushl	%edi
