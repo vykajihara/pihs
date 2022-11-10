@@ -729,6 +729,7 @@ recuperar:
 	call 	printf
 	addl 	$8, %esp
 
+	call  	zeraLista
 	call 	abreArqRecuperar
 	call 	recuperaRegs
 	call 	fechaArquivo
@@ -738,6 +739,21 @@ recuperar:
 	addl 	$4, %esp
 
 	RET
+
+zeraLista:
+	movl 	listaPtr, %edi
+	movl 	$NULL, listaPtr	
+loopZeraLista:
+	cmpl 	$NULL, %edi	
+	je 		retorno	
+	
+	pushl  	%edi
+	call  	free
+	addl    $4, %esp	
+
+	addl 	tamCampos, %edi
+	movl 	(%edi), %edi 
+	jmp 	loopZeraLista 
 
 abreArqRecuperar:
 	movl 	SYS_OPEN, %eax 	
